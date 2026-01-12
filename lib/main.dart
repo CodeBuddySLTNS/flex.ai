@@ -2,9 +2,11 @@ import 'package:flexai/components/header.dart';
 import 'package:flexai/components/sidebar_drawer.dart';
 import 'package:flexai/screens/flexai_chat.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:go_router/go_router.dart';
 
-void main() {
+Future main() async {
+  await dotenv.load(fileName: ".env");
   runApp(const MaterialApp(debugShowCheckedModeBanner: false, home: FlexAI()));
 }
 
