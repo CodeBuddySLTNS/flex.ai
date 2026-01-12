@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 void main() {
-  runApp(const MaterialApp(home: FlexAI()));
+  runApp(const MaterialApp(debugShowCheckedModeBanner: false, home: FlexAI()));
 }
 
 class FlexAI extends StatelessWidget {
