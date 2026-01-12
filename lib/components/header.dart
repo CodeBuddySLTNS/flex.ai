@@ -27,7 +27,12 @@ class Header extends StatelessWidget {
               SvgPicture.asset("assets/images/crown.svg", width: 15),
             ],
           ),
-          Icon(Icons.menu, size: 30),
+          IconButton(
+            icon: Icon(Icons.menu, size: 30),
+            onPressed: () {
+              Scaffold.of(context).openEndDrawer();
+            },
+          ),
         ],
       ),
     );

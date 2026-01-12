@@ -1,4 +1,5 @@
 import 'package:flexai/components/header.dart';
+import 'package:flexai/components/sidebar_drawer.dart';
 import 'package:flexai/screens/flexai_chat.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
@@ -25,6 +26,7 @@ final _router = GoRouter(
     ShellRoute(
       builder: (context, state, child) {
         return Scaffold(
+          endDrawer: SidebarDrawer(),
           body: SafeArea(
             child: Column(
               children: [
