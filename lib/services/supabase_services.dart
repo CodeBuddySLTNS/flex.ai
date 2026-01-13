@@ -1,7 +1,68 @@
+import 'package:flexai/main.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 class SupabaseService {
   final _supabase = Supabase.instance.client;
+
+  Future<String?> registerUsername(String username) async {
+    try {
+      final response = await _supabase.functions.invoke(
+        'register-username',
+        body: {'username': username},
+      );
+
+      final data = response.data;
+
+      if (data is Map<String, dynamic> && data['user_id'] != null) {
+        return data['user_id'].toString();
+      }
+
+      throw "UNKNOWN_ERROR";
+    } on FunctionException catch (e) {
+      if (e.status == 409) {
+        throw "DUPLICATE";
+      }
+
+      throw "NETWORK_ERROR";
+    } catch (e) {
+      throw "NETWORK_ERROR";
+    }
+  }
+
+  Future<List<ChatMessage>> sendMessage(
+    String username,
+    String prompt,
+    String? conversationId,
+    String? instructionId,
+  ) async {
+    try {
+      final response = await _supabase.functions.invoke(
+        'query-gemini',
+        body: {
+          'username': username,
+          'prompt': prompt,
+          'conversation_id': conversationId,
+          'instruction_id': instructionId ?? prefs.getString('instructionId'),
+        },
+      );
+
+      final data = response.data;
+
+      if (data.isNotEmpty) {
+        return data.map((m) => ChatMessage.fromJson(m));
+      }
+
+      throw "UNKNOWN_ERROR";
+    } on FunctionException catch (e) {
+      if (e.status == 409) {
+        throw "DUPLICATE";
+      }
+
+      throw "NETWORK_ERROR";
+    } catch (e) {
+      throw "NETWORK_ERROR";
+    }
+  }
 
   Future<List<ChatMessage>> getChatMessages(String conversationId) async {
     final List<Map<String, dynamic>> response = await _supabase
@@ -12,10 +73,9 @@ class SupabaseService {
         .eq("conversation_id", conversationId);
 
     if (response.isNotEmpty) {
-      List<ChatMessage> messages = response
-          .map((m) => ChatMessage.fromJson(m))
+      return response
+          .map((m) => ChatMessage.fromJson({...m, 'status': 'sent'}))
           .toList();
-      return messages;
     }
 
     return [];
@@ -28,6 +88,7 @@ class ChatMessage {
   String role;
   String content;
   String createdAt;
+  String status;
 
   ChatMessage({
     required this.id,
@@ -35,6 +96,7 @@ class ChatMessage {
     required this.role,
     required this.content,
     required this.createdAt,
+    this.status = 'sending',
   });
 
   factory ChatMessage.fromJson(Map<String, dynamic> json) {
