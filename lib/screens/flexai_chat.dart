@@ -11,10 +11,19 @@ class FlexAIChat extends StatefulWidget {
 class _FlexAIChatState extends State<FlexAIChat> {
   bool isFetching = false;
   String username = '';
-  List<ChatMessage> chatMessages = [];
+  String conversationId = '';
+  List<ChatMessage> chatMessages = [
+    ChatMessage(
+      id: 0,
+      conversationId: '',
+      role: 'model',
+      content: '"Welcome to Flex AI. What’s on your mind today?"',
+      createdAt: '',
+    ),
+  ];
 
-  final TextEditingController _usernameText = TextEditingController();
   final TextEditingController _prompText = TextEditingController();
+  final ScrollController _scrollController = ScrollController();
 
   @override
   void initState() {
@@ -32,6 +41,14 @@ class _FlexAIChatState extends State<FlexAIChat> {
     }
   }
 
+  void scrollToBottom() {
+    _scrollController.animateTo(
+      _scrollController.position.maxScrollExtent,
+      duration: Duration(milliseconds: 300),
+      curve: Curves.easeOut,
+    );
+  }
+
   void _checkUsername() {
     final String? savedUsername = prefs.getString("username");
 
@@ -47,48 +64,143 @@ class _FlexAIChatState extends State<FlexAIChat> {
   }
 
   void _showUsernameDialog() {
+    final TextEditingController localController = TextEditingController();
+
     showDialog(
       barrierDismissible: false,
       context: context,
-      builder: (context) => AlertDialog(
-        title: Text(
-          "Set Username",
-          style: TextStyle(fontFamily: "Poppins"),
-          textAlign: TextAlign.center,
-        ),
-        content: TextField(
-          controller: _usernameText,
-          textAlign: TextAlign.center,
-          style: TextStyle(fontFamily: "Poppins"),
-          decoration: InputDecoration(
-            hintText: "e.g. JuanTamad",
-            hintStyle: TextStyle(fontFamily: "Poppins"),
-          ),
-        ),
-        actionsAlignment: MainAxisAlignment.center,
-        actions: [
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton(
-              style: ElevatedButton.styleFrom(backgroundColor: Colors.black),
-              onPressed: () async {
-                if (_usernameText.text.trim().isNotEmpty) {
-                  await prefs.setString("username", _usernameText.text.trim());
-                  setState(() => username = _usernameText.text.trim());
-                  if (context.mounted) Navigator.of(context).pop();
-                }
-              },
-              child: Text("Save", style: TextStyle(color: Colors.white)),
-            ),
-          ),
-        ],
-      ),
+      builder: (context) {
+        // Local variables for the dialog state
+        bool isLoading = false;
+        String? errorMessage;
+
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            return AlertDialog(
+              title: const Text(
+                "Set Username",
+                style: TextStyle(fontFamily: "Poppins"),
+                textAlign: TextAlign.center,
+              ),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  TextField(
+                    controller: localController,
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(fontFamily: "Poppins"),
+                    decoration: const InputDecoration(
+                      hintText: "e.g. JuanTamad",
+                      hintStyle: TextStyle(fontFamily: "Poppins"),
+                    ),
+                    onChanged: (_) {
+                      if (errorMessage != null) {
+                        setDialogState(() => errorMessage = null);
+                      }
+                    },
+                  ),
+                  const SizedBox(height: 5),
+
+                  if (errorMessage != null)
+                    Text(
+                      errorMessage!,
+                      style: const TextStyle(
+                        fontFamily: "Poppins",
+                        fontSize: 12,
+                        color: Colors.red,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+
+                  if (isLoading)
+                    const Padding(
+                      padding: EdgeInsets.only(top: 10),
+                      child: SizedBox(
+                        height: 20,
+                        width: 20,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      ),
+                    ),
+                ],
+              ),
+              actionsAlignment: MainAxisAlignment.center,
+              actions: [
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.black,
+                    ),
+                    onPressed: isLoading
+                        ? null
+                        : () async {
+                            final inputName = localController.text.trim();
+
+                            if (inputName.isNotEmpty) {
+                              setDialogState(() {
+                                isLoading = true;
+                                errorMessage = null;
+                              });
+
+                              try {
+                                final userId = await SupabaseService()
+                                    .registerUsername(inputName);
+
+                                if (userId != null) {
+                                  await prefs.setString("userId", userId);
+                                  await prefs.setString("username", inputName);
+
+                                  if (mounted) {
+                                    setState(() {
+                                      username = inputName;
+                                    });
+                                  }
+
+                                  if (context.mounted) {
+                                    Navigator.of(context).pop();
+                                  }
+                                }
+                              } catch (e) {
+                                switch (e) {
+                                  case "DUPLICATE":
+                                    return setDialogState(() {
+                                      errorMessage = "Username already taken.";
+                                      isLoading = false;
+                                    });
+
+                                  case "NETWORK_ERROR":
+                                    return setDialogState(() {
+                                      errorMessage =
+                                          "Please check your internet connection.";
+                                      isLoading = false;
+                                    });
+
+                                  default:
+                                    return setDialogState(() {
+                                      errorMessage =
+                                          "Something went wrong. Please try again.";
+                                      isLoading = false;
+                                    });
+                                }
+                              }
+                            }
+                          },
+                    child: const Text(
+                      "Save",
+                      style: TextStyle(color: Colors.white),
+                    ),
+                  ),
+                ),
+              ],
+            );
+          },
+        );
+      },
     );
   }
 
   @override
   void dispose() {
-    _usernameText.dispose();
     _prompText.dispose();
     super.dispose();
   }
@@ -113,11 +225,14 @@ class _FlexAIChatState extends State<FlexAIChat> {
                   ),
                 )
               : SingleChildScrollView(
+                  controller: _scrollController,
                   child: Column(
-                    children: [
-                      // Chat messages will go here
-                      Align(
-                        alignment: Alignment.centerLeft,
+                    // Chat messages will go here
+                    children: chatMessages.map<Widget>((chat) {
+                      return Align(
+                        alignment: chat.role == "model"
+                            ? Alignment.centerLeft
+                            : Alignment.centerRight,
                         child: FractionallySizedBox(
                           widthFactor: 0.8,
                           child: Container(
@@ -130,7 +245,7 @@ class _FlexAIChatState extends State<FlexAIChat> {
                               ),
                             ),
                             child: Text(
-                              "Hello! How can I assist you today?",
+                              chat.content,
                               style: TextStyle(
                                 fontFamily: "Poppins",
                                 fontSize: 16,
@@ -138,8 +253,8 @@ class _FlexAIChatState extends State<FlexAIChat> {
                             ),
                           ),
                         ),
-                      ),
-                    ],
+                      );
+                    }).toList(),
                   ),
                 ),
         ),
@@ -180,7 +295,21 @@ class _FlexAIChatState extends State<FlexAIChat> {
               ),
 
               GestureDetector(
-                onTap: () async {},
+                onTap: () async {
+                  setState(() {
+                    chatMessages.add(
+                      ChatMessage(
+                        id: 0,
+                        conversationId: '',
+                        role: 'user',
+                        content: _prompText.text.trim(),
+                        createdAt: '',
+                      ),
+                    );
+                  });
+
+                  scrollToBottom();
+                },
                 child: Container(
                   padding: EdgeInsets.all(7),
                   decoration: BoxDecoration(
