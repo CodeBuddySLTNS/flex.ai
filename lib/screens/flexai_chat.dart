@@ -9,7 +9,9 @@ class FlexAIChat extends StatefulWidget {
 }
 
 class _FlexAIChatState extends State<FlexAIChat> {
-  bool isFetching = false;
+  bool isTyping = false;
+  bool isRetrying = false;
+  bool isFetchingChats = false;
   String username = '';
   String conversationId = '';
   List<ChatMessage> chatMessages = [
@@ -17,7 +19,7 @@ class _FlexAIChatState extends State<FlexAIChat> {
       id: 0,
       conversationId: '',
       role: 'model',
-      content: '"Welcome to Flex AI. What’s on your mind today?"',
+      content: 'Welcome to Flex AI. What’s on your mind today?',
       createdAt: '',
     ),
   ];
@@ -29,6 +31,52 @@ class _FlexAIChatState extends State<FlexAIChat> {
   void initState() {
     super.initState();
     _checkUsername();
+  }
+
+  Future<void> sendMessage(String prompt, {bool retry = false}) async {
+    try {
+      final ChatMessage reply = await SupabaseService().sendMessage(
+        username,
+        prompt,
+        conversationId,
+        null,
+      );
+
+      setState(() {
+        if (retry) {
+          isRetrying = false;
+        }
+
+        chatMessages.add(reply);
+        if (conversationId.isEmpty) conversationId = reply.conversationId;
+
+        isTyping = false;
+      });
+    } catch (e) {
+      debugPrint("Error: $e");
+      setState(() {
+        if (retry) {
+          isRetrying = false;
+        } else {
+          chatMessages[chatMessages.length - 1].status = 'failed';
+        }
+
+        chatMessages.add(
+          ChatMessage(
+            id: 0,
+            conversationId: '',
+            role: 'model',
+            content: 'Network error. Please check your internet connection.',
+            createdAt: '',
+          ),
+        );
+        isTyping = false;
+      });
+
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        scrollToBottom();
+      });
+    }
   }
 
   Future<void> fetchChatMessages() async {
@@ -207,123 +255,261 @@ class _FlexAIChatState extends State<FlexAIChat> {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: [
-        Expanded(
-          child: isFetching
-              ? Center(
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      CircularProgressIndicator.adaptive(),
-                      SizedBox(height: 10),
-                      Text(
-                        "Loading chat history...",
-                        style: TextStyle(fontFamily: "Poppins"),
-                      ),
-                    ],
-                  ),
-                )
-              : SingleChildScrollView(
-                  controller: _scrollController,
-                  child: Column(
-                    // Chat messages will go here
-                    children: chatMessages.map<Widget>((chat) {
-                      return Align(
-                        alignment: chat.role == "model"
-                            ? Alignment.centerLeft
-                            : Alignment.centerRight,
-                        child: FractionallySizedBox(
-                          widthFactor: 0.8,
-                          child: Container(
-                            margin: EdgeInsets.all(10),
-                            padding: EdgeInsets.all(10),
-                            decoration: BoxDecoration(
-                              color: Color.fromARGB(255, 230, 230, 230),
-                              borderRadius: BorderRadius.all(
-                                Radius.circular(10),
+    return GestureDetector(
+      onTap: () => FocusScope.of(context).unfocus(),
+      child: Column(
+        children: [
+          Expanded(
+            child: isFetchingChats
+                ? Center(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        CircularProgressIndicator.adaptive(),
+                        SizedBox(height: 10),
+                        Text(
+                          "Loading chat history...",
+                          style: TextStyle(fontFamily: "Poppins"),
+                        ),
+                      ],
+                    ),
+                  )
+                : SingleChildScrollView(
+                    controller: _scrollController,
+                    child: Column(
+                      // Chat messages will go here
+                      children: [
+                        ...chatMessages.map<Widget>((chat) {
+                          return Align(
+                            alignment: chat.role == "model"
+                                ? Alignment.centerLeft
+                                : Alignment.centerRight,
+                            child: Container(
+                              constraints: BoxConstraints(
+                                minWidth: 100,
+                                maxWidth:
+                                    MediaQuery.of(context).size.width * 0.8,
+                              ),
+                              margin: EdgeInsets.all(10),
+                              padding: EdgeInsets.all(10),
+                              decoration: BoxDecoration(
+                                color: Color.fromARGB(255, 230, 230, 230),
+                                border:
+                                    chat.status == 'failed' ||
+                                        chat.status == 'expired'
+                                    ? BoxBorder.all(
+                                        color: const Color.fromARGB(
+                                          80,
+                                          255,
+                                          82,
+                                          82,
+                                        ),
+                                      )
+                                    : null,
+                                borderRadius: BorderRadius.only(
+                                  topLeft: Radius.circular(15),
+                                  topRight: Radius.circular(15),
+                                  bottomLeft: chat.role == 'model'
+                                      ? Radius.zero
+                                      : Radius.circular(15),
+                                  bottomRight: chat.role == 'model'
+                                      ? Radius.circular(15)
+                                      : Radius.zero,
+                                ),
+                              ),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    chat.content,
+                                    style: TextStyle(
+                                      fontFamily: "Poppins",
+                                      fontSize: 16,
+                                    ),
+                                  ),
+
+                                  if (chat.role == 'user' &&
+                                      chat.status == 'failed')
+                                    GestureDetector(
+                                      onTap: isRetrying || isTyping
+                                          ? null
+                                          : () {
+                                              setState(() {
+                                                chatMessages.removeLast();
+                                                isRetrying = true;
+                                                isTyping = true;
+                                              });
+                                              sendMessage(
+                                                chat.content,
+                                                retry: true,
+                                              );
+                                            },
+                                      child: Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          if (!isRetrying)
+                                            Icon(
+                                              Icons.refresh_rounded,
+                                              color: Colors.red,
+                                              size: 15,
+                                            ),
+                                          Text(
+                                            isRetrying
+                                                ? "Retrying..."
+                                                : "Retry",
+                                            style: TextStyle(
+                                              fontFamily: 'Poppins',
+                                              fontSize: 11,
+                                              color: Colors.red,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                ],
                               ),
                             ),
-                            child: Text(
-                              chat.content,
-                              style: TextStyle(
-                                fontFamily: "Poppins",
-                                fontSize: 16,
+                          );
+                        }),
+
+                        if (isTyping)
+                          Align(
+                            alignment: Alignment.centerLeft,
+                            child: Container(
+                              margin: EdgeInsets.all(10),
+                              padding: EdgeInsets.all(14),
+                              decoration: BoxDecoration(
+                                color: Color.fromARGB(255, 230, 230, 230),
+                                borderRadius: BorderRadius.only(
+                                  topLeft: Radius.circular(10),
+                                  topRight: Radius.circular(10),
+                                  bottomRight: Radius.circular(10),
+                                  bottomLeft: Radius.zero,
+                                ),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Text(
+                                    "Thinking...",
+                                    style: TextStyle(
+                                      color: Colors.grey[600],
+                                      fontSize: 14,
+                                      fontStyle: FontStyle.italic,
+                                    ),
+                                  ),
+                                  SizedBox(width: 10),
+                                  // A small spinner
+                                  SizedBox(
+                                    height: 16,
+                                    width: 16,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                      color: Colors.grey[600],
+                                    ),
+                                  ),
+                                ],
                               ),
                             ),
                           ),
-                        ),
-                      );
-                    }).toList(),
+                      ],
+                    ),
                   ),
-                ),
-        ),
-        Container(
-          margin: EdgeInsets.only(bottom: 15, left: 10, right: 10, top: 5),
-          decoration: BoxDecoration(
-            color: Color.fromARGB(255, 250, 250, 250),
-            borderRadius: BorderRadius.all(Radius.circular(10)),
-            boxShadow: [
-              BoxShadow(color: Colors.black12, spreadRadius: 1, blurRadius: 2),
-            ],
           ),
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: [
-              Expanded(
-                child: TextField(
-                  controller: _prompText,
-                  cursorColor: Colors.black54,
-                  minLines: 1,
-                  maxLines: 4,
-                  style: TextStyle(
-                    fontSize: 15,
-                    fontFamily: "Poppins",
-                    color: Colors.black87,
-                  ),
-                  decoration: InputDecoration(
-                    hintText: "Type your message...",
-                    hintStyle: TextStyle(
+          Container(
+            margin: EdgeInsets.only(bottom: 15, left: 10, right: 10, top: 5),
+            decoration: BoxDecoration(
+              color: Color.fromARGB(255, 250, 250, 250),
+              borderRadius: BorderRadius.all(Radius.circular(10)),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black12,
+                  spreadRadius: 1,
+                  blurRadius: 2,
+                ),
+              ],
+            ),
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                Expanded(
+                  child: TextField(
+                    controller: _prompText,
+                    cursorColor: Colors.black54,
+                    minLines: 1,
+                    maxLines: 4,
+                    style: TextStyle(
                       fontSize: 15,
                       fontFamily: "Poppins",
-                      color: Colors.grey,
+                      color: Colors.black87,
                     ),
-                    border: InputBorder.none,
-                  ),
-                ),
-              ),
-
-              GestureDetector(
-                onTap: () async {
-                  setState(() {
-                    chatMessages.add(
-                      ChatMessage(
-                        id: 0,
-                        conversationId: '',
-                        role: 'user',
-                        content: _prompText.text.trim(),
-                        createdAt: '',
+                    decoration: InputDecoration(
+                      hintText: "Type your message...",
+                      hintStyle: TextStyle(
+                        fontSize: 15,
+                        fontFamily: "Poppins",
+                        color: Colors.grey,
                       ),
-                    );
-                  });
-
-                  scrollToBottom();
-                },
-                child: Container(
-                  padding: EdgeInsets.all(7),
-                  decoration: BoxDecoration(
-                    color: Colors.black,
-                    borderRadius: BorderRadius.all(Radius.circular(100)),
-                    border: BoxBorder.all(),
+                      border: InputBorder.none,
+                    ),
                   ),
-                  child: Icon(Icons.arrow_upward_rounded, color: Colors.white),
                 ),
-              ),
-            ],
+
+                GestureDetector(
+                  onTap: isTyping
+                      ? null
+                      : () async {
+                          setState(() {
+                            chatMessages.add(
+                              ChatMessage(
+                                id: 0,
+                                conversationId: '',
+                                role: 'user',
+                                content: _prompText.text.trim(),
+                                createdAt: '',
+                              ),
+                            );
+
+                            chatMessages = chatMessages
+                                .map(
+                                  (c) => c.copyWith(
+                                    status: c.status == 'failed'
+                                        ? 'expired'
+                                        : c.status,
+                                  ),
+                                )
+                                .toList();
+
+                            isTyping = true;
+                          });
+
+                          sendMessage(_prompText.text.trim());
+
+                          _prompText.clear();
+                          FocusScope.of(context).unfocus();
+                          WidgetsBinding.instance.addPostFrameCallback((_) {
+                            scrollToBottom();
+                          });
+                        },
+                  child: Container(
+                    padding: EdgeInsets.all(7),
+                    decoration: BoxDecoration(
+                      color: Colors.black,
+                      borderRadius: BorderRadius.all(Radius.circular(100)),
+                      border: BoxBorder.all(),
+                    ),
+                    child: Icon(
+                      Icons.arrow_upward_rounded,
+                      color: Colors.white,
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 }
