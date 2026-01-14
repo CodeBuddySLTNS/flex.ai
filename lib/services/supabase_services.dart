@@ -1,4 +1,5 @@
 import 'package:flexai/main.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 class SupabaseService {
@@ -29,7 +30,7 @@ class SupabaseService {
     }
   }
 
-  Future<List<ChatMessage>> sendMessage(
+  Future<ChatMessage> sendMessage(
     String username,
     String prompt,
     String? conversationId,
@@ -49,7 +50,7 @@ class SupabaseService {
       final data = response.data;
 
       if (data.isNotEmpty) {
-        return data.map((m) => ChatMessage.fromJson(m));
+        return ChatMessage.fromJson({...data, 'status': 'sent'});
       }
 
       throw "UNKNOWN_ERROR";
@@ -58,8 +59,10 @@ class SupabaseService {
         throw "DUPLICATE";
       }
 
+      debugPrint("1st: $e");
       throw "NETWORK_ERROR";
     } catch (e) {
+      debugPrint("2nd: $e");
       throw "NETWORK_ERROR";
     }
   }
@@ -98,6 +101,17 @@ class ChatMessage {
     required this.createdAt,
     this.status = 'sending',
   });
+
+  ChatMessage copyWith({String? status, String? content}) {
+    return ChatMessage(
+      id: id,
+      conversationId: conversationId,
+      role: role,
+      content: content ?? this.content,
+      status: status ?? this.status,
+      createdAt: createdAt,
+    );
+  }
 
   factory ChatMessage.fromJson(Map<String, dynamic> json) {
     return ChatMessage(
