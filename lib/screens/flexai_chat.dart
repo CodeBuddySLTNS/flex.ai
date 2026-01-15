@@ -1,14 +1,18 @@
+import 'package:flexai/components/chat_message.dart';
 import 'package:flexai/main.dart';
+import 'package:flexai/models/chat_message.dart';
+import 'package:flexai/providers/chat_provider.dart';
 import 'package:flexai/services/supabase_services.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-class FlexAIChat extends StatefulWidget {
+class FlexAIChat extends ConsumerStatefulWidget {
   const FlexAIChat({super.key});
   @override
-  State<FlexAIChat> createState() => _FlexAIChatState();
+  ConsumerState<FlexAIChat> createState() => _FlexAIChatState();
 }
 
-class _FlexAIChatState extends State<FlexAIChat> {
+class _FlexAIChatState extends ConsumerState<FlexAIChat> {
   bool isTyping = false;
   bool isRetrying = false;
   bool isFetchingChats = false;
@@ -31,6 +35,14 @@ class _FlexAIChatState extends State<FlexAIChat> {
   void initState() {
     super.initState();
     _checkUsername();
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final convoId = ref.read(conversationIdProvider);
+      debugPrint('convo: $convoId');
+      if (convoId.isNotEmpty) {
+        fetchChatMessages(convoId);
+      }
+    });
   }
 
   Future<void> sendMessage(String prompt, {bool retry = false}) async {
@@ -45,10 +57,15 @@ class _FlexAIChatState extends State<FlexAIChat> {
       setState(() {
         if (retry) {
           isRetrying = false;
+          chatMessages[chatMessages.length - 1].status = 'sent';
         }
 
         chatMessages.add(reply);
-        if (conversationId.isEmpty) conversationId = reply.conversationId;
+        if (conversationId.isEmpty) {
+          conversationId = reply.conversationId;
+          ref.read(conversationIdProvider.notifier).state =
+              reply.conversationId;
+        }
 
         isTyping = false;
       });
@@ -79,14 +96,46 @@ class _FlexAIChatState extends State<FlexAIChat> {
     }
   }
 
-  Future<void> fetchChatMessages() async {
-    final messages = await SupabaseService().getChatMessages("conversationId");
+  Future<void> fetchChatMessages(String convoId) async {
+    setState(() {
+      isFetchingChats = true;
+      chatMessages = [];
+    });
 
-    if (messages.isNotEmpty) {
+    try {
+      final messages = await SupabaseService().getChatMessages(convoId);
+
       setState(() {
-        chatMessages = messages;
+        conversationId = convoId;
+        isFetchingChats = false;
+      });
+
+      setState(() {
+        chatMessages = [
+          ChatMessage(
+            id: 0,
+            conversationId: '',
+            role: 'model',
+            content: 'Welcome to Flex AI. What’s on your mind today?',
+            createdAt: '',
+          ),
+          ...messages,
+        ];
+      });
+    } catch (e) {
+      setState(() {
+        isFetchingChats = false;
       });
     }
+  }
+
+  void retryFn(String message) {
+    setState(() {
+      chatMessages.removeLast();
+      isRetrying = true;
+      isTyping = true;
+    });
+    sendMessage(message, retry: true);
   }
 
   void scrollToBottom() {
@@ -255,6 +304,25 @@ class _FlexAIChatState extends State<FlexAIChat> {
 
   @override
   Widget build(BuildContext context) {
+    ref.listen(conversationIdProvider, (prev, next) {
+      debugPrint("Prev: $prev, Next: $next");
+      if (next.isEmpty) {
+        setState(() {
+          chatMessages = [
+            ChatMessage(
+              id: 0,
+              conversationId: '',
+              role: 'model',
+              content: 'Welcome to Flex AI. What’s on your mind today?',
+              createdAt: '',
+            ),
+          ];
+        });
+      } else if (next != conversationId) {
+        fetchChatMessages(next);
+      }
+    });
+
     return GestureDetector(
       onTap: () => FocusScope.of(context).unfocus(),
       child: Column(
@@ -268,7 +336,7 @@ class _FlexAIChatState extends State<FlexAIChat> {
                         CircularProgressIndicator.adaptive(),
                         SizedBox(height: 10),
                         Text(
-                          "Loading chat history...",
+                          "Loading chat messages...",
                           style: TextStyle(fontFamily: "Poppins"),
                         ),
                       ],
@@ -280,95 +348,12 @@ class _FlexAIChatState extends State<FlexAIChat> {
                       // Chat messages will go here
                       children: [
                         ...chatMessages.map<Widget>((chat) {
-                          return Align(
-                            alignment: chat.role == "model"
-                                ? Alignment.centerLeft
-                                : Alignment.centerRight,
-                            child: Container(
-                              constraints: BoxConstraints(
-                                minWidth: 100,
-                                maxWidth:
-                                    MediaQuery.of(context).size.width * 0.8,
-                              ),
-                              margin: EdgeInsets.all(10),
-                              padding: EdgeInsets.all(10),
-                              decoration: BoxDecoration(
-                                color: Color.fromARGB(255, 230, 230, 230),
-                                border:
-                                    chat.status == 'failed' ||
-                                        chat.status == 'expired'
-                                    ? BoxBorder.all(
-                                        color: const Color.fromARGB(
-                                          80,
-                                          255,
-                                          82,
-                                          82,
-                                        ),
-                                      )
-                                    : null,
-                                borderRadius: BorderRadius.only(
-                                  topLeft: Radius.circular(15),
-                                  topRight: Radius.circular(15),
-                                  bottomLeft: chat.role == 'model'
-                                      ? Radius.zero
-                                      : Radius.circular(15),
-                                  bottomRight: chat.role == 'model'
-                                      ? Radius.circular(15)
-                                      : Radius.zero,
-                                ),
-                              ),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    chat.content,
-                                    style: TextStyle(
-                                      fontFamily: "Poppins",
-                                      fontSize: 16,
-                                    ),
-                                  ),
-
-                                  if (chat.role == 'user' &&
-                                      chat.status == 'failed')
-                                    GestureDetector(
-                                      onTap: isRetrying || isTyping
-                                          ? null
-                                          : () {
-                                              setState(() {
-                                                chatMessages.removeLast();
-                                                isRetrying = true;
-                                                isTyping = true;
-                                              });
-                                              sendMessage(
-                                                chat.content,
-                                                retry: true,
-                                              );
-                                            },
-                                      child: Row(
-                                        mainAxisSize: MainAxisSize.min,
-                                        children: [
-                                          if (!isRetrying)
-                                            Icon(
-                                              Icons.refresh_rounded,
-                                              color: Colors.red,
-                                              size: 15,
-                                            ),
-                                          Text(
-                                            isRetrying
-                                                ? "Retrying..."
-                                                : "Retry",
-                                            style: TextStyle(
-                                              fontFamily: 'Poppins',
-                                              fontSize: 11,
-                                              color: Colors.red,
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                ],
-                              ),
-                            ),
+                          return chatBubble(
+                            chat: chat,
+                            context: context,
+                            isRetrying: isRetrying,
+                            isTyping: isTyping,
+                            retryFn: retryFn,
                           );
                         }),
 
