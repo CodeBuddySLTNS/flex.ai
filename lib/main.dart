@@ -1,8 +1,10 @@
 import 'package:flexai/components/header.dart';
 import 'package:flexai/components/sidebar_drawer.dart';
+import 'package:flexai/providers/chat_provider.dart';
 import 'package:flexai/screens/flexai_chat.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -20,7 +22,14 @@ Future main() async {
     cacheOptions: SharedPreferencesWithCacheOptions(),
   );
 
-  runApp(const MaterialApp(debugShowCheckedModeBanner: false, home: FlexAI()));
+  runApp(
+    ProviderScope(
+      child: const MaterialApp(
+        debugShowCheckedModeBanner: false,
+        home: FlexAI(),
+      ),
+    ),
+  );
 }
 
 class FlexAI extends StatelessWidget {
@@ -40,16 +49,23 @@ final _router = GoRouter(
   routes: [
     ShellRoute(
       builder: (context, state, child) {
-        return Scaffold(
-          endDrawer: SidebarDrawer(),
-          body: SafeArea(
-            child: Column(
-              children: [
-                Header(),
-                Expanded(child: child),
-              ],
-            ),
-          ),
+        return Consumer(
+          builder: (context, ref, _) {
+            return Scaffold(
+              endDrawer: SidebarDrawer(),
+              onEndDrawerChanged: (isOpened) {
+                ref.invalidate(chatHistoryProvider);
+              },
+              body: SafeArea(
+                child: Column(
+                  children: [
+                    Header(),
+                    Expanded(child: child),
+                  ],
+                ),
+              ),
+            );
+          },
         );
       },
       routes: [
