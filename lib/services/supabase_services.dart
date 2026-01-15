@@ -1,4 +1,5 @@
 import 'package:flexai/main.dart';
+import 'package:flexai/models/chat_message.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -83,53 +84,18 @@ class SupabaseService {
 
     return [];
   }
-}
 
-class ChatMessage {
-  int id;
-  String conversationId;
-  String role;
-  String content;
-  String createdAt;
-  String status;
+  Future<List<Map<String, dynamic>>> getChatHistory() async {
+    final response = await _supabase
+        .from('conversations')
+        .select()
+        .eq('user_id', prefs.getString('userId') ?? '')
+        .order('created_at', ascending: false);
 
-  ChatMessage({
-    required this.id,
-    required this.conversationId,
-    required this.role,
-    required this.content,
-    required this.createdAt,
-    this.status = 'sending',
-  });
+    if (response.isNotEmpty) {
+      return response;
+    }
 
-  ChatMessage copyWith({String? status, String? content}) {
-    return ChatMessage(
-      id: id,
-      conversationId: conversationId,
-      role: role,
-      content: content ?? this.content,
-      status: status ?? this.status,
-      createdAt: createdAt,
-    );
-  }
-
-  factory ChatMessage.fromJson(Map<String, dynamic> json) {
-    return ChatMessage(
-      id: json['id'],
-      conversationId: json["conversationId"],
-      role: json["role"],
-      content: json["content"],
-      createdAt: json['createdAt'],
-    );
-  }
-
-  Map<String, dynamic> toJson() {
-    return {
-      'id': id,
-      'conversationId': conversationId,
-      'role': role,
-      'content': content,
-      'createdAt': createdAt,
-    };
+    return [];
   }
 }
