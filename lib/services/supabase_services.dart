@@ -1,4 +1,5 @@
 import 'package:flexai/main.dart';
+import 'package:flexai/models/ai_model.dart';
 import 'package:flexai/models/chat_message.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -94,6 +95,21 @@ class SupabaseService {
 
     if (response.isNotEmpty) {
       return response;
+    }
+
+    return [];
+  }
+
+  Future<List<AiModel>> getModels() async {
+    final response = await _supabase
+        .from('instructions')
+        .select()
+        .eq('is_model', true);
+
+    if (response.isNotEmpty) {
+      return response
+          .map((r) => AiModel(r['id'], r['title'], r['author_id']))
+          .toList();
     }
 
     return [];
