@@ -51,7 +51,7 @@ class _FlexAIChatState extends ConsumerState<FlexAIChat> {
         username,
         prompt,
         conversationId,
-        null,
+        ref.watch(selectedModelProvider),
       );
 
       setState(() {
@@ -68,6 +68,10 @@ class _FlexAIChatState extends ConsumerState<FlexAIChat> {
         }
 
         isTyping = false;
+      });
+
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        scrollToBottom();
       });
     } catch (e) {
       debugPrint("Error: $e");
