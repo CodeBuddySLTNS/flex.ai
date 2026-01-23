@@ -28,8 +28,8 @@ class _UsernameDialogState extends ConsumerState<UsernameDialog> {
   Widget build(BuildContext context) {
     return AlertDialog(
       title: const Text(
-        "Set Username",
-        style: TextStyle(fontFamily: "Poppins"),
+        "Your Name",
+        style: TextStyle(fontFamily: "Poppins", fontWeight: FontWeight.bold),
         textAlign: TextAlign.center,
       ),
       content: Column(
