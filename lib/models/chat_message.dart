@@ -36,7 +36,7 @@ class ChatMessage {
       role: json["role"],
       content: json["content"],
       createdAt: json['createdAt'],
-      model: json['code'],
+      model: json['model'],
     );
   }
 
