@@ -38,7 +38,7 @@ class SidebarDrawer extends ConsumerWidget {
                 ],
               ),
               onTap: () {
-                ref.read(conversationIdProvider.notifier).state = '';
+                ref.read(conversationIdProvider.notifier).state = 'new';
                 context.pop();
               },
             ),
@@ -71,14 +71,24 @@ class SidebarDrawer extends ConsumerWidget {
                   );
                 },
                 loading: () => const Center(child: CircularProgressIndicator()),
-                error: (err, stack) => Center(
-                  child: Text(
-                    "Error loading chats",
-                    style: TextStyle(
-                      fontFamily: "Poppins",
-                      color: Colors.red[300],
+                error: (err, stack) => Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      "Error loading chats",
+                      style: TextStyle(
+                        fontFamily: "Poppins",
+                        color: Colors.red[300],
+                      ),
                     ),
-                  ),
+
+                    ElevatedButton.icon(
+                      onPressed: () {
+                        ref.invalidate(chatHistoryProvider);
+                      },
+                      label: Text("Retry"),
+                    ),
+                  ],
                 ),
               ),
             ),
