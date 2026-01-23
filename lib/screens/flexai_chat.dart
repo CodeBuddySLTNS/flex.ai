@@ -24,6 +24,7 @@ class _FlexAIChatState extends ConsumerState<FlexAIChat> {
       id: 0,
       conversationId: '',
       role: 'model',
+      model: 'flex_ai',
       content: 'Welcome to Flex AI. What’s on your mind today?',
       createdAt: '',
     ),
@@ -50,7 +51,7 @@ class _FlexAIChatState extends ConsumerState<FlexAIChat> {
       final ChatMessage reply = await SupabaseService().sendMessage(
         username,
         prompt,
-        conversationId,
+        conversationId != 'new' ? conversationId : '',
         ref.watch(selectedModelProvider),
       );
 
@@ -120,6 +121,7 @@ class _FlexAIChatState extends ConsumerState<FlexAIChat> {
             id: 0,
             conversationId: '',
             role: 'model',
+            model: 'flex_ai',
             content: 'Welcome to Flex AI. What’s on your mind today?',
             createdAt: '',
           ),
@@ -180,19 +182,20 @@ class _FlexAIChatState extends ConsumerState<FlexAIChat> {
 
     ref.listen(conversationIdProvider, (prev, next) {
       debugPrint("Prev: $prev, Next: $next");
-      if (next.isEmpty) {
+      if (next.isEmpty || next == 'new') {
         setState(() {
           chatMessages = [
             ChatMessage(
               id: 0,
               conversationId: '',
               role: 'model',
+              model: 'flex_ai',
               content: 'Welcome to Flex AI. What’s on your mind today?',
               createdAt: '',
             ),
           ];
         });
-      } else if (next != conversationId) {
+      } else if (next != conversationId && next != 'new') {
         fetchChatMessages(next);
       }
     });
