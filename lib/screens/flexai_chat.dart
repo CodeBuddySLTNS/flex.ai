@@ -4,6 +4,7 @@ import 'package:flexai/main.dart';
 import 'package:flexai/models/chat_message.dart';
 import 'package:flexai/providers/chat_provider.dart';
 import 'package:flexai/services/supabase_services.dart';
+import 'package:flexai/utilities/utils.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -19,16 +20,7 @@ class _FlexAIChatState extends ConsumerState<FlexAIChat> {
   bool isFetchingChats = false;
   String username = '';
   String conversationId = '';
-  List<ChatMessage> chatMessages = [
-    ChatMessage(
-      id: 0,
-      conversationId: '',
-      role: 'model',
-      model: 'flex_ai',
-      content: 'Welcome to Flex AI. What’s on your mind today?',
-      createdAt: '',
-    ),
-  ];
+  List<ChatMessage> chatMessages = [];
 
   final TextEditingController _prompText = TextEditingController();
   final ScrollController _scrollController = ScrollController();
@@ -88,7 +80,9 @@ class _FlexAIChatState extends ConsumerState<FlexAIChat> {
             id: 0,
             conversationId: '',
             role: 'model',
-            content: 'Network error. Please check your internet connection.',
+            content: e == 'SERVER_ERROR'
+                ? 'Something went wrong with our server. Please try again.'
+                : 'Network error. Please check your internet connection.',
             createdAt: '',
           ),
         );
@@ -116,17 +110,7 @@ class _FlexAIChatState extends ConsumerState<FlexAIChat> {
       });
 
       setState(() {
-        chatMessages = [
-          ChatMessage(
-            id: 0,
-            conversationId: '',
-            role: 'model',
-            model: 'flex_ai',
-            content: 'Welcome to Flex AI. What’s on your mind today?',
-            createdAt: '',
-          ),
-          ...messages,
-        ];
+        chatMessages = messages;
       });
     } catch (e) {
       setState(() {
@@ -175,6 +159,8 @@ class _FlexAIChatState extends ConsumerState<FlexAIChat> {
 
   @override
   Widget build(BuildContext context) {
+    final model = ref.watch(modelProvider);
+
     ref.listen(
       usernameProvider,
       (prev, next) => setState(() => username = next),
@@ -182,20 +168,12 @@ class _FlexAIChatState extends ConsumerState<FlexAIChat> {
 
     ref.listen(conversationIdProvider, (prev, next) {
       debugPrint("Prev: $prev, Next: $next");
+      debugPrint(
+        "${next.isEmpty || next == 'new'} ${next != conversationId && next != 'new'}",
+      );
       if (next.isEmpty || next == 'new') {
-        setState(() {
-          chatMessages = [
-            ChatMessage(
-              id: 0,
-              conversationId: '',
-              role: 'model',
-              model: 'flex_ai',
-              content: 'Welcome to Flex AI. What’s on your mind today?',
-              createdAt: '',
-            ),
-          ];
-        });
-      } else if (next != conversationId && next != 'new') {
+        setState(() => chatMessages = []);
+      } else if (next != conversationId || next != 'new') {
         fetchChatMessages(next);
       }
     });
@@ -222,8 +200,23 @@ class _FlexAIChatState extends ConsumerState<FlexAIChat> {
                 : SingleChildScrollView(
                     controller: _scrollController,
                     child: Column(
-                      // Chat messages will go here
                       children: [
+                        chatBubble(
+                          chat: ChatMessage(
+                            id: 0,
+                            conversationId: '',
+                            role: 'model',
+                            model: model.isNotEmpty ? model : 'flex_ai',
+                            content: getGreetings(model),
+                            createdAt: '',
+                          ),
+                          context: context,
+                          isRetrying: isRetrying,
+                          isTyping: isTyping,
+                          retryFn: retryFn,
+                        ),
+
+                        // Chat messages will go here
                         ...chatMessages.map<Widget>((chat) {
                           return chatBubble(
                             chat: chat,
