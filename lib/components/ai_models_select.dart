@@ -1,8 +1,10 @@
 import 'package:flexai/models/ai_model.dart';
 import 'package:flexai/providers/chat_provider.dart';
 import 'package:flexai/services/supabase_services.dart';
+import 'package:flexai/utilities/utils.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_svg/svg.dart';
 
 class AiModelSelect extends ConsumerStatefulWidget {
   const AiModelSelect({super.key});
@@ -55,18 +57,28 @@ class _AiModelSelectState extends ConsumerState<AiModelSelect> {
         items: aiModels.map<DropdownMenuItem<String>>((AiModel model) {
           return DropdownMenuItem(
             value: model.id,
-            child: Text(
-              model.title,
-              style: TextStyle(
-                fontFamily: 'Poppins',
-                fontWeight: FontWeight.w500,
-              ),
+            child: Row(
+              children: [
+                SvgPicture.asset(getAiModelAsset(model.code), width: 30),
+                SizedBox(width: 5),
+                Text(
+                  model.title,
+                  style: TextStyle(
+                    fontFamily: 'Poppins',
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ],
             ),
           );
         }).toList(),
         onChanged: (String? newValue) {
-          ref.read(selectedModelProvider.notifier).state = newValue!;
           if (aiModels.length <= 1) fetchModels();
+          ref.read(selectedModelProvider.notifier).state = newValue!;
+          ref.read(modelProvider.notifier).state = getModelById(
+            newValue,
+            aiModels,
+          );
         },
       ),
     );
