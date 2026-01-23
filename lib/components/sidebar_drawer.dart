@@ -39,6 +39,9 @@ class SidebarDrawer extends ConsumerWidget {
               ),
               onTap: () {
                 ref.read(conversationIdProvider.notifier).state = 'new';
+                ref.read(modelProvider.notifier).state = 'flex_ai';
+                ref.read(selectedModelProvider.notifier).state =
+                    'bbfb75e2-2a4e-4843-be60-0751440026db';
                 context.pop();
               },
             ),
