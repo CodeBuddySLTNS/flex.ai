@@ -5,6 +5,7 @@ class ChatMessage {
   String content;
   String createdAt;
   String status;
+  String? model;
 
   ChatMessage({
     required this.id,
@@ -13,6 +14,7 @@ class ChatMessage {
     required this.content,
     required this.createdAt,
     this.status = 'sending',
+    this.model,
   });
 
   ChatMessage copyWith({String? status, String? content}) {
@@ -20,6 +22,7 @@ class ChatMessage {
       id: id,
       conversationId: conversationId,
       role: role,
+      model: model,
       content: content ?? this.content,
       status: status ?? this.status,
       createdAt: createdAt,
@@ -33,6 +36,7 @@ class ChatMessage {
       role: json["role"],
       content: json["content"],
       createdAt: json['createdAt'],
+      model: json['code'],
     );
   }
 
