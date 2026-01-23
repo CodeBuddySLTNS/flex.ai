@@ -12,6 +12,7 @@ class AiModelSelect extends ConsumerStatefulWidget {
 }
 
 class _AiModelSelectState extends ConsumerState<AiModelSelect> {
+  bool isFetching = false;
   List<AiModel> aiModels = [
     AiModel('bbfb75e2-2a4e-4843-be60-0751440026db', 'Flex AI'),
   ];
@@ -24,6 +25,8 @@ class _AiModelSelectState extends ConsumerState<AiModelSelect> {
 
   Future<void> fetchModels() async {
     try {
+      debugPrint("fetching models...");
+      isFetching = true;
       final models = await SupabaseService().getModels();
 
       if (models.isNotEmpty) {
@@ -31,7 +34,10 @@ class _AiModelSelectState extends ConsumerState<AiModelSelect> {
           aiModels = models;
         });
       }
+
+      isFetching = false;
     } catch (e) {
+      isFetching = false;
       debugPrint("$e");
     }
   }
@@ -60,7 +66,7 @@ class _AiModelSelectState extends ConsumerState<AiModelSelect> {
         }).toList(),
         onChanged: (String? newValue) {
           ref.read(selectedModelProvider.notifier).state = newValue!;
-          debugPrint(ref.read(selectedModelProvider));
+          if (aiModels.length <= 1) fetchModels();
         },
       ),
     );
