@@ -62,7 +62,7 @@ class SupabaseService {
       }
 
       debugPrint("1st: $e");
-      throw "NETWORK_ERROR";
+      throw "SERVER_ERROR";
     } catch (e) {
       debugPrint("2nd: $e");
       throw "NETWORK_ERROR";
@@ -107,9 +107,7 @@ class SupabaseService {
         .eq('is_model', true);
 
     if (response.isNotEmpty) {
-      return response
-          .map((r) => AiModel(r['id'], r['title'], r['author_id']))
-          .toList();
+      return response.map((r) => AiModel.fromJson(r)).toList();
     }
 
     return [];
