@@ -70,6 +70,11 @@ flutter:
     - assets/images/flexai.svg
     - assets/images/flexai_icon.svg
     - assets/images/crown.svg
+    - assets/images/bardagul_ai.svg
+    - assets/images/harot_ai.svg
+    - assets/images/tita_ai.svg
+    - assets/images/other_ai.svg
+    - assets/images/error_ai.svg
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images
