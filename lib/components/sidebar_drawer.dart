@@ -32,6 +32,20 @@ class SidebarDrawer extends ConsumerWidget {
             ListTile(
               title: Row(
                 children: [
+                  Icon(Icons.settings),
+                  SizedBox(width: 5),
+                  Text("Settings", style: TextStyle(fontFamily: "Poppins")),
+                ],
+              ),
+              onTap: () {
+                context.pop();
+                context.go("/settings");
+              },
+            ),
+
+            ListTile(
+              title: Row(
+                children: [
                   Icon(Icons.add_rounded),
                   SizedBox(width: 5),
                   Text("New chat", style: TextStyle(fontFamily: "Poppins")),
@@ -42,6 +56,7 @@ class SidebarDrawer extends ConsumerWidget {
                 ref.read(modelProvider.notifier).state = 'flex_ai';
                 ref.read(selectedModelProvider.notifier).state =
                     'bbfb75e2-2a4e-4843-be60-0751440026db';
+                debugPrint("dcd");
                 context.pop();
               },
             ),
