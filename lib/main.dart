@@ -3,6 +3,7 @@ import 'package:flexai/components/sidebar_drawer.dart';
 import 'package:flexai/providers/chat_provider.dart';
 import 'package:flexai/screens/flexai_chat.dart';
 import 'package:flexai/screens/loading_screen.dart';
+import 'package:flexai/screens/settings.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -24,69 +25,55 @@ Future main() async {
     cacheOptions: SharedPreferencesWithCacheOptions(),
   );
 
-  runApp(
-    const ProviderScope(
-      child: FlexAI(), // Removed MaterialApp wrapper here, moved inside FlexAI
-    ),
-  );
+  runApp(const ProviderScope(child: FlexAI()));
 }
 
-// --- 1. THE APP STATE (Manages Loading) ---
 class AppState extends ChangeNotifier {
   bool isLoading = true;
 
   Future<void> initApp() async {
-    // This is where you put extra async checks (Auth, User Profile, etc.)
-    // We add a delay to ensure the animation plays nicely
     await Future.delayed(const Duration(seconds: 4));
 
     isLoading = false;
-    notifyListeners(); // Tells the Router to re-evaluate redirects
+    notifyListeners();
   }
 }
 
 final appStateProvider = ChangeNotifierProvider((ref) => AppState());
 
-// --- 2. THE ROUTER PROVIDER (Replaces the global _router) ---
 final routerProvider = Provider<GoRouter>((ref) {
   final appState = ref.watch(appStateProvider);
 
   return GoRouter(
     initialLocation: "/",
-    refreshListenable: appState, // Listens for notifyListeners() from AppState
-    // THE REDIRECT LOGIC
+    refreshListenable: appState,
     redirect: (context, state) {
       final isLoading = appState.isLoading;
       final isGoingToLoading = state.uri.toString() == '/loading';
 
-      // If we are loading, but not on the loading screen -> Go to /loading
       if (isLoading && !isGoingToLoading) {
         return '/loading';
       }
 
-      // If we are DONE loading, but still on loading screen -> Go to Home
       if (!isLoading && isGoingToLoading) {
         return '/';
       }
 
-      return null; // No redirection needed
+      return null;
     },
 
     routes: [
-      // ROUTE A: The Loading Screen (Outside ShellRoute)
       GoRoute(
         path: '/loading',
-        // Paste the RobotLoadingScreen class I gave you into a file and import it
         builder: (context, state) => const RobotLoadingScreen(),
       ),
 
-      // ROUTE B: The Main App Shell
       ShellRoute(
         builder: (context, state, child) {
           return Consumer(
             builder: (context, ref, _) {
               return Scaffold(
-                endDrawer: const SidebarDrawer(), // Added const for performance
+                endDrawer: const SidebarDrawer(),
                 onEndDrawerChanged: (isOpened) {
                   ref.invalidate(chatHistoryProvider);
                 },
@@ -104,13 +91,16 @@ final routerProvider = Provider<GoRouter>((ref) {
         },
         routes: [
           GoRoute(path: "/", builder: (context, state) => const FlexAIChat()),
+          GoRoute(
+            path: "/settings",
+            builder: (context, state) => const Settings(),
+          ),
         ],
       ),
     ],
   );
 });
 
-// --- 3. THE WIDGET ---
 class FlexAI extends ConsumerStatefulWidget {
   const FlexAI({super.key});
 
@@ -122,13 +112,11 @@ class _FlexAIState extends ConsumerState<FlexAI> {
   @override
   void initState() {
     super.initState();
-    // Start the "Initialization" process when the app mounts
     ref.read(appStateProvider).initApp();
   }
 
   @override
   Widget build(BuildContext context) {
-    // Watch the routerProvider we created above
     final router = ref.watch(routerProvider);
 
     return MaterialApp.router(
