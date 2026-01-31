@@ -73,7 +73,7 @@ class SupabaseService {
     final List<Map<String, dynamic>> response = await _supabase
         .from('chat_messages')
         .select(
-          'id, conversationId:conversation_id, role, content, createdAt:created_at',
+          'id, conversationId:conversation_id, role, content, model, createdAt:created_at',
         )
         .eq("conversation_id", conversationId);
 
