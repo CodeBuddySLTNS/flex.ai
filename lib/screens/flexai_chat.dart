@@ -154,6 +154,7 @@ class _FlexAIChatState extends ConsumerState<FlexAIChat> {
   @override
   void dispose() {
     _prompText.dispose();
+    _scrollController.dispose();
     super.dispose();
   }
 
