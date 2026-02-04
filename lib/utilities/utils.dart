@@ -34,7 +34,7 @@ String getGreetings(String? model) {
       return "Hello baby! Welcome to Flex AI. You look good today ha. 😉 Ano, usap tayo? I’m all yours. What’s on your pretty mind?";
 
     case 'other_ai':
-      return "How can I help you today?";
+      return "Hi there! How can I help you today?";
 
     default:
       return "Welcome to Flex AI. What’s on your mind today?";
