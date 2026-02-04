@@ -1,3 +1,4 @@
+import 'package:flexai/main.dart';
 import 'package:flexai/providers/chat_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -38,6 +39,7 @@ class SidebarDrawer extends ConsumerWidget {
                 ],
               ),
               onTap: () {
+                ref.read(conversationIdProvider.notifier).state = 'settings';
                 context.pop();
                 context.go("/settings");
               },
@@ -52,12 +54,15 @@ class SidebarDrawer extends ConsumerWidget {
                 ],
               ),
               onTap: () {
+                if (ref.read(conversationIdProvider) == 'settings') {
+                  context.pop();
+                  context.go("/");
+                }
                 ref.read(conversationIdProvider.notifier).state = 'new';
                 ref.read(modelProvider.notifier).state = 'flex_ai';
                 ref.read(selectedModelProvider.notifier).state =
+                    prefs.getString('default_model') ??
                     'bbfb75e2-2a4e-4843-be60-0751440026db';
-                debugPrint("dcd");
-                context.pop();
               },
             ),
 
@@ -65,7 +70,18 @@ class SidebarDrawer extends ConsumerWidget {
               child: historyAsync.when(
                 data: (chats) {
                   if (chats.isEmpty) {
-                    return Text('No chats yet.');
+                    return Column(
+                      children: [
+                        const SizedBox(height: 30),
+                        Text(
+                          'No chats yet.',
+                          style: TextStyle(
+                            fontFamily: "Poppins",
+                            color: Colors.grey,
+                          ),
+                        ),
+                      ],
+                    );
                   }
 
                   return ListView.builder(
@@ -79,7 +95,6 @@ class SidebarDrawer extends ConsumerWidget {
                           style: TextStyle(fontFamily: "Poppins"),
                         ),
                         onTap: () {
-                          debugPrint("chnage convo: ${chat['id']}");
                           ref.read(conversationIdProvider.notifier).state =
                               chat['id'];
                           context.pop();
