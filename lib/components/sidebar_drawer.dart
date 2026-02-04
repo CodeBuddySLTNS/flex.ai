@@ -55,9 +55,9 @@ class SidebarDrawer extends ConsumerWidget {
               ),
               onTap: () {
                 if (ref.read(conversationIdProvider) == 'settings') {
-                  context.pop();
                   context.go("/");
                 }
+                context.pop();
                 ref.read(conversationIdProvider.notifier).state = 'new';
                 ref.read(modelProvider.notifier).state = 'flex_ai';
                 ref.read(selectedModelProvider.notifier).state =
@@ -95,6 +95,10 @@ class SidebarDrawer extends ConsumerWidget {
                           style: TextStyle(fontFamily: "Poppins"),
                         ),
                         onTap: () {
+                          if (ref.read(conversationIdProvider) == 'settings') {
+                            context.go("/");
+                          }
+
                           ref.read(conversationIdProvider.notifier).state =
                               chat['id'];
                           context.pop();
