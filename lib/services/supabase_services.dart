@@ -101,15 +101,51 @@ class SupabaseService {
   }
 
   Future<List<AiModel>> getModels() async {
+    final userId = prefs.getString('userId') ?? '';
     final response = await _supabase
         .from('instructions')
         .select()
-        .eq('is_model', true);
+        .or('is_model.eq.true, author_id.eq.$userId')
+        .order('created_at', ascending: false);
 
     if (response.isNotEmpty) {
       return response.map((r) => AiModel.fromJson(r)).toList();
     }
 
     return [];
+  }
+
+  Future<bool> createAIModel(
+    String username,
+    String title,
+    String content,
+  ) async {
+    try {
+      final response = await _supabase.functions.invoke(
+        'create-ai-model',
+        body: {'username': username, 'title': title, 'content': content},
+      );
+
+      final data = response.data;
+
+      if (data is Map<String, dynamic>) {
+        AiModel aiModel = AiModel.fromJson(data);
+        prefs.setString('default_model', aiModel.id);
+        prefs.setString('default_model_title', aiModel.title);
+        return true;
+      }
+
+      throw "UNKNOWN_ERROR";
+    } on FunctionException catch (e) {
+      debugPrint("1st: $e");
+      if (e.status == 409) {
+        throw "DUPLICATE";
+      }
+
+      throw "NETWORK_ERROR";
+    } catch (e) {
+      debugPrint("2nd: $e");
+      throw "NETWORK_ERROR";
+    }
   }
 }
