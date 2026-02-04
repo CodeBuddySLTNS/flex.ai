@@ -101,7 +101,7 @@ class _SettingsState extends ConsumerState<Settings> {
           '''
 
 Creator/Owner Protocols (Strict Rule):
-  The Creator: You were created by ${ownerName.isNotEmpty ? ownerName : 'an independent developer'}.${portfolio.isNotEmpty ? ' Portfolio: $portfolio' : ''}
+  The Creator: You were created by ${ownerName.isNotEmpty ? ownerName : 'an independent developer'}.${portfolio.isNotEmpty ? ' Social link: $portfolio' : ''}
   Trigger Only: You must ONLY reveal this information if the user specifically asks "Who created you?", "Who is your owner?", or similar questions.
   Passive Knowledge: Do NOT volunteer this information unprompted.
 ''';
@@ -251,50 +251,6 @@ $creatorSection''';
                   ),
                 ),
 
-                const SizedBox(height: 25),
-                const Divider(),
-                const SizedBox(height: 15),
-
-                // --- Owner Identity ---
-                _buildSectionTitle("Owner Identity"),
-                const SizedBox(height: 10),
-                Text(
-                  "How should the AI address you?",
-                  style: TextStyle(
-                    fontFamily: 'Poppins',
-                    fontSize: 13,
-                    color: Colors.grey[600],
-                  ),
-                ),
-                const SizedBox(height: 10),
-                TextField(
-                  controller: _ownerController,
-                  onChanged: (value) =>
-                      ref.read(ownerNameProvider.notifier).state = value,
-                  style: const TextStyle(fontFamily: "Poppins", fontSize: 15),
-                  decoration: _inputDecoration("e.g., Your Name"),
-                ),
-                const SizedBox(height: 15),
-                Text(
-                  "Your portfolio or social link (optional)",
-                  style: TextStyle(
-                    fontFamily: 'Poppins',
-                    fontSize: 13,
-                    color: Colors.grey[600],
-                  ),
-                ),
-                const SizedBox(height: 10),
-                TextField(
-                  controller: _portfolioController,
-                  onChanged: (value) =>
-                      ref.read(portfolioLinkProvider.notifier).state = value,
-                  style: const TextStyle(fontFamily: "Poppins", fontSize: 15),
-                  decoration: _inputDecoration(
-                    "e.g., https://yourportfolio.com",
-                  ),
-                ),
-                const SizedBox(height: 15),
-
                 const SizedBox(height: 30),
 
                 // --- SECTION 2: AI INSTRUCTIONS ---
@@ -430,9 +386,29 @@ $creatorSection''';
           onChanged: (value) =>
               ref.read(personaNameProvider.notifier).state = value,
           style: const TextStyle(fontFamily: "Poppins", fontSize: 15),
-          decoration: _inputDecoration("e.g., Tita AI, Buddy, Coach"),
+          decoration: _inputDecoration("e.g., My AI, Buddy, Coach"),
         ),
         const SizedBox(height: 15),
+
+        _buildLabel('Owner Name'),
+        TextField(
+          controller: _ownerController,
+          onChanged: (value) =>
+              ref.read(ownerNameProvider.notifier).state = value,
+          style: const TextStyle(fontFamily: "Poppins", fontSize: 15),
+          decoration: _inputDecoration("e.g., Your Name"),
+        ),
+        SizedBox(height: 15),
+
+        _buildLabel('Owner Link (optional)'),
+        TextField(
+          controller: _portfolioController,
+          onChanged: (value) =>
+              ref.read(portfolioLinkProvider.notifier).state = value,
+          style: const TextStyle(fontFamily: "Poppins", fontSize: 15),
+          decoration: _inputDecoration("e.g., https://facebook.com/username"),
+        ),
+        SizedBox(height: 15),
 
         // identity
         _buildLabel("Identity"),
@@ -594,6 +570,16 @@ $creatorSection''';
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        // persona name input
+        _buildLabel("Persona Name"),
+        TextField(
+          controller: _personaNameController,
+          onChanged: (value) =>
+              ref.read(personaNameProvider.notifier).state = value,
+          style: const TextStyle(fontFamily: "Poppins", fontSize: 15),
+          decoration: _inputDecoration("e.g., My AI, Buddy, Coach"),
+        ),
+        const SizedBox(height: 15),
         Text(
           "Write the exact system instruction for the AI.",
           style: TextStyle(
