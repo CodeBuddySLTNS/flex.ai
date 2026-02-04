@@ -40,6 +40,7 @@ class _FlexAIChatState extends ConsumerState<FlexAIChat> {
 
   Future<void> sendMessage(String prompt, {bool retry = false}) async {
     try {
+      debugPrint('convo id: $conversationId');
       final ChatMessage reply = await SupabaseService().sendMessage(
         username,
         prompt,
@@ -171,12 +172,10 @@ class _FlexAIChatState extends ConsumerState<FlexAIChat> {
       debugPrint("prev: $prev");
       debugPrint("next: $next");
 
-      debugPrint(
-        "${next != conversationId && (next != 'new' && next != 'settings')}",
-      );
       if (next != conversationId && next != 'new' && next != 'settings') {
         fetchChatMessages(next);
-      } else {
+      } else if (next == 'new') {
+        conversationId = '';
         if (context.mounted) setState(() => chatMessages = []);
       }
     });
