@@ -35,7 +35,7 @@ class AiModelSelect extends ConsumerWidget {
       error: (error, stack) => TextButton(
         onPressed: () => ref.refresh(aiModelsProvider),
         child: const Text(
-          'Network Error. Retry?',
+          'Error. Retry?',
           style: TextStyle(fontFamily: 'Poppins'),
           textAlign: TextAlign.center,
         ),
@@ -66,6 +66,7 @@ class AiModelSelect extends ConsumerWidget {
               return DropdownMenuItem(
                 value: model.id,
                 child: Row(
+                  mainAxisSize: MainAxisSize.min,
                   children: [
                     SvgPicture.asset(getAiModelAsset(model.code), width: 30),
                     const SizedBox(width: 5),
