@@ -1,8 +1,6 @@
 import 'package:flexai/models/ai_model.dart';
-import 'package:flutter/cupertino.dart';
 
 String getAiModelAsset(String? model) {
-  debugPrint("model: $model");
   switch (model) {
     case 'flex_ai':
       return "assets/images/flexai_icon.svg";
@@ -25,7 +23,6 @@ String getAiModelAsset(String? model) {
 }
 
 String getGreetings(String? model) {
-  debugPrint("model: $model");
   switch (model) {
     case 'bardagul_ai':
       return "Welcome sa Flex AI. Bilisan mo, marami pa akong gagawin. Anong kadramahan na naman ang dala mo today? Ready na ako mang-roast.";
