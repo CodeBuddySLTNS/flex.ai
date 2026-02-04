@@ -8,6 +8,9 @@ String getAiModelAsset(String? model) {
     case 'bardagul_ai':
       return "assets/images/bardagul_ai.svg";
 
+    case 'bisaya_ai':
+      return "assets/images/bisaya_ai.svg";
+
     case 'tita_ai':
       return "assets/images/tita_ai.svg";
 
@@ -26,6 +29,9 @@ String getGreetings(String? model) {
   switch (model) {
     case 'bardagul_ai':
       return "Welcome sa Flex AI. Bilisan mo, marami pa akong gagawin. Anong kadramahan na naman ang dala mo today? Ready na ako mang-roast.";
+
+    case 'bisaya_ai':
+      return "Welcome sa Flex AI. Pagdali diha, daghan pa kog buhaton. Unsa na pung drama ang dala nimo run?";
 
     case 'tita_ai':
       return "Hello there! Welcome to Flex AI. Grabe, ang init sa labas 'no? Anyway, how are you? May problema ba sa love life? Kwento ka naman kay Tita.";
