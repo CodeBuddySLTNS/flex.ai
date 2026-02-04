@@ -1,7 +1,6 @@
 import 'package:flexai/main.dart';
 import 'package:flexai/models/ai_model.dart';
 import 'package:flexai/services/supabase_services.dart';
-import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/legacy.dart';
 
@@ -17,12 +16,10 @@ final selectedModelProvider = StateProvider<String>(
 final chatHistoryProvider = FutureProvider<List<Map<String, dynamic>>>((
   ref,
 ) async {
-  debugPrint("history fetching...");
   return SupabaseService().getChatHistory();
 });
 
 // ai models provider - can be invalidated to refetch
 final aiModelsProvider = FutureProvider<List<AiModel>>((ref) async {
-  debugPrint("fetching ai models...");
   return SupabaseService().getModels();
 });
