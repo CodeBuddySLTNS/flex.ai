@@ -168,14 +168,16 @@ class _FlexAIChatState extends ConsumerState<FlexAIChat> {
     );
 
     ref.listen(conversationIdProvider, (prev, next) {
-      debugPrint("Prev: $prev, Next: $next");
+      debugPrint("prev: $prev");
+      debugPrint("next: $next");
+
       debugPrint(
-        "${next.isEmpty || next == 'new'} ${next != conversationId && next != 'new'}",
+        "${next != conversationId && (next != 'new' && next != 'settings')}",
       );
-      if (next.isEmpty || next == 'new') {
-        setState(() => chatMessages = []);
-      } else if (next != conversationId || next != 'new') {
+      if (next != conversationId && next != 'new' && next != 'settings') {
         fetchChatMessages(next);
+      } else {
+        if (context.mounted) setState(() => chatMessages = []);
       }
     });
 
