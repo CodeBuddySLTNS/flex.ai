@@ -164,6 +164,9 @@ $creatorSection''';
       if (success && mounted) {
         // refetch ai models to include the new one
         ref.invalidate(aiModelsProvider);
+        ref.read(selectedModelProvider.notifier).state =
+            prefs.getString('default_model') ??
+            'bbfb75e2-2a4e-4843-be60-0751440026db';
 
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(

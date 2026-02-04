@@ -106,7 +106,7 @@ class SupabaseService {
         .from('instructions')
         .select()
         .or('is_model.eq.true, author_id.eq.$userId')
-        .order('created_at', ascending: false);
+        .order('created_at', ascending: true);
 
     if (response.isNotEmpty) {
       return response.map((r) => AiModel.fromJson(r)).toList();

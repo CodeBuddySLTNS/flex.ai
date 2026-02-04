@@ -7,6 +7,7 @@ import 'package:flexai/services/supabase_services.dart';
 import 'package:flexai/utilities/utils.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 
 class FlexAIChat extends ConsumerStatefulWidget {
   const FlexAIChat({super.key});
@@ -232,41 +233,51 @@ class _FlexAIChatState extends ConsumerState<FlexAIChat> {
                         if (isTyping)
                           Align(
                             alignment: Alignment.centerLeft,
-                            child: Container(
-                              margin: EdgeInsets.all(10),
-                              padding: EdgeInsets.all(14),
-                              decoration: BoxDecoration(
-                                color: Color.fromARGB(255, 230, 230, 230),
-                                borderRadius: BorderRadius.only(
-                                  topLeft: Radius.circular(10),
-                                  topRight: Radius.circular(10),
-                                  bottomRight: Radius.circular(10),
-                                  bottomLeft: Radius.zero,
+                            child: Row(
+                              children: [
+                                Container(
+                                  margin: EdgeInsets.all(10),
+                                  padding: EdgeInsets.all(14),
+                                  decoration: BoxDecoration(
+                                    color: Color.fromARGB(255, 230, 230, 230),
+                                    borderRadius: BorderRadius.only(
+                                      topLeft: Radius.circular(10),
+                                      topRight: Radius.circular(10),
+                                      bottomRight: Radius.circular(10),
+                                      bottomLeft: Radius.zero,
+                                    ),
+                                  ),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Text(
+                                        "Thinking...",
+                                        style: TextStyle(
+                                          color: Colors.grey[600],
+                                          fontSize: 14,
+                                          fontStyle: FontStyle.italic,
+                                        ),
+                                      ),
+                                      SizedBox(width: 10),
+                                      // A small spinner
+                                      SizedBox(
+                                        height: 16,
+                                        width: 16,
+                                        child: CircularProgressIndicator(
+                                          strokeWidth: 2,
+                                          color: Colors.grey[600],
+                                        ),
+                                      ),
+                                    ],
+                                  ),
                                 ),
-                              ),
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Text(
-                                    "Thinking...",
-                                    style: TextStyle(
-                                      color: Colors.grey[600],
-                                      fontSize: 14,
-                                      fontStyle: FontStyle.italic,
-                                    ),
-                                  ),
-                                  SizedBox(width: 10),
-                                  // A small spinner
-                                  SizedBox(
-                                    height: 16,
-                                    width: 16,
-                                    child: CircularProgressIndicator(
-                                      strokeWidth: 2,
-                                      color: Colors.grey[600],
-                                    ),
-                                  ),
-                                ],
-                              ),
+                                SvgPicture.asset(
+                                  getAiModelAsset(model),
+                                  width:
+                                      MediaQuery.of(context).size.width * 0.2 -
+                                      20,
+                                ),
+                              ],
                             ),
                           ),
                       ],
