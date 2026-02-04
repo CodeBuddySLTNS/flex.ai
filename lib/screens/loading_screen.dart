@@ -1,3 +1,4 @@
+import 'package:flexai/main.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
@@ -25,18 +26,18 @@ class RobotLoadingScreen extends StatelessWidget {
 
             const Spacer(),
 
-            const Padding(
-              padding: EdgeInsets.only(bottom: 20.0),
+            Padding(
+              padding: const EdgeInsets.only(bottom: 20.0),
               child: Text(
-                "Powered by FlexAI © 2026",
-                style: TextStyle(
+                prefs.getString('footer_text') ?? "Powered by FlexAI © 2026",
+                style: const TextStyle(
                   color: Colors.grey,
                   fontSize: 14,
                   fontWeight: FontWeight.w500,
                 ),
               ),
             ),
-            SizedBox(height: 20),
+            const SizedBox(height: 20),
           ],
         ),
       ),
