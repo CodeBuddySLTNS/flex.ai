@@ -30,8 +30,8 @@ Future main() async {
 
   // prefs.clear();
 
-  prefs.setBool('is_activated', false);
-  prefs.setBool('is_owner', false);
+  prefs.setBool('is_activated', true);
+  prefs.setBool('is_owner', true);
 
   runApp(const ProviderScope(child: FlexAI()));
 }
@@ -57,14 +57,24 @@ final routerProvider = Provider<GoRouter>((ref) {
     refreshListenable: appState,
     redirect: (context, state) {
       final isLoading = appState.isLoading;
-      final isGoingToLoading = state.uri.toString() == '/loading';
+      final currentPath = state.uri.toString();
+      final isAtLoading = currentPath == '/loading';
+      final isAtActivation = currentPath == '/activation';
+      final isActivated = prefs.getBool('is_activated') == true;
 
-      if (isLoading && !isGoingToLoading) {
+      // while loading, always go to loading screen
+      if (isLoading && !isAtLoading) {
         return '/loading';
       }
 
-      if (!isLoading && isGoingToLoading) {
-        return '/';
+      // redirect based on activation status
+      if (!isLoading && isAtLoading) {
+        return isActivated ? '/' : '/activation';
+      }
+
+      // protect home route - redirect to activation if not activated
+      if (!isLoading && !isActivated && !isAtActivation && !isAtLoading) {
+        return '/activation';
       }
 
       return null;
@@ -98,11 +108,10 @@ final routerProvider = Provider<GoRouter>((ref) {
           );
         },
         routes: [
+          GoRoute(path: "/", builder: (context, state) => const FlexAIChat()),
           GoRoute(
-            path: "/",
-            builder: (context, state) => prefs.getBool('is_activated') ?? false
-                ? const FlexAIChat()
-                : const ActivationScreen(),
+            path: "/activation",
+            builder: (context, state) => const ActivationScreen(),
           ),
           GoRoute(
             path: "/settings",
@@ -136,13 +145,29 @@ class _FlexAIState extends ConsumerState<FlexAI> {
     _subscribeToInstructionsChanges();
   }
 
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    ref.listenManual(statusProvider, (previous, next) {
+      if (next == true && previous != true) {
+        _channel?.unsubscribe();
+        _subscribeToInstructionsChanges();
+      }
+    });
+  }
+
   void _subscribeToInstructionsChanges() {
     final instructionId = prefs.getString('instructionId');
     if (instructionId == null) return;
 
+    debugPrint(
+      'Subscribing to instructions changes for instructionId: $instructionId',
+    );
+
     _channel = _supabaseService.subscribeToInstructions(
       instructionId: instructionId,
       onUpdate: (ownerText) {
+        ref.invalidate(aiModelsProvider);
         if (ownerText != null) {
           prefs.setString('owner_text', ownerText);
         }
