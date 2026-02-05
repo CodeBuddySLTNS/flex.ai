@@ -102,10 +102,13 @@ class SupabaseService {
 
   Future<List<AiModel>> getModels() async {
     final userId = prefs.getString('userId') ?? '';
+    final instructionId = prefs.getString('instructionId') ?? '';
     final response = await _supabase
         .from('instructions')
         .select()
-        .or('is_model.eq.true, author_id.eq.$userId')
+        .or(
+          'is_model.eq.true${userId.isNotEmpty ? ',author_id.eq.$userId' : ''}${instructionId.isNotEmpty ? ',id.eq.$instructionId' : ''}',
+        )
         .order('created_at', ascending: true);
 
     if (response.isNotEmpty) {
@@ -129,11 +132,17 @@ class SupabaseService {
     String username,
     String title,
     String content,
+    String? ownerText,
   ) async {
     try {
       final response = await _supabase.functions.invoke(
         'create-ai-model',
-        body: {'username': username, 'title': title, 'content': content},
+        body: {
+          'username': username,
+          'title': title,
+          'content': content,
+          'owner_text': ownerText,
+        },
       );
 
       final data = response.data;
@@ -177,6 +186,7 @@ class SupabaseService {
           ),
           callback: (payload) {
             final newData = payload.newRecord;
+
             if (newData.containsKey('owner_text')) {
               onUpdate(newData['owner_text']);
             }
