@@ -99,6 +99,7 @@ class _UsernameDialogState extends ConsumerState<UsernameDialog> {
                           await prefs.setString("userId", userId);
                           await prefs.setString("username", inputName);
                           ref.read(usernameProvider.notifier).state = inputName;
+                          ref.invalidate(aiModelsProvider);
 
                           if (context.mounted) {
                             Navigator.of(context).pop();

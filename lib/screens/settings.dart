@@ -159,6 +159,7 @@ $creatorSection''';
         username,
         title,
         content,
+        _ownerController.text,
       );
 
       if (success && mounted) {
