@@ -115,6 +115,16 @@ class SupabaseService {
     return [];
   }
 
+  Future<AiModel> getModel(String id) async {
+    final response = await _supabase
+        .from('instructions')
+        .select()
+        .eq('id', id)
+        .single();
+
+    return AiModel.fromJson(response);
+  }
+
   Future<bool> createAIModel(
     String username,
     String title,
@@ -147,5 +157,31 @@ class SupabaseService {
       debugPrint("2nd: $e");
       throw "NETWORK_ERROR";
     }
+  }
+
+  // realtime listener for instructions updates
+  RealtimeChannel subscribeToInstructions({
+    required String instructionId,
+    required Function(String? ownerText) onUpdate,
+  }) {
+    return _supabase
+        .channel('instructions_changes')
+        .onPostgresChanges(
+          event: PostgresChangeEvent.update,
+          schema: 'public',
+          table: 'instructions',
+          filter: PostgresChangeFilter(
+            type: PostgresChangeFilterType.eq,
+            column: 'id',
+            value: instructionId,
+          ),
+          callback: (payload) {
+            final newData = payload.newRecord;
+            if (newData.containsKey('owner_text')) {
+              onUpdate(newData['owner_text']);
+            }
+          },
+        )
+        .subscribe();
   }
 }

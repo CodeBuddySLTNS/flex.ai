@@ -29,7 +29,11 @@ class RobotLoadingScreen extends StatelessWidget {
             Padding(
               padding: const EdgeInsets.only(bottom: 20.0),
               child: Text(
-                prefs.getString('footer_text') ?? "Powered by FlexAI © 2026",
+                prefs.getBool('is_owner') == false
+                    ? prefs.getString('owner_text') ??
+                          "Powered by FlexAI © 2026"
+                    : prefs.getString('footer_text') ??
+                          "Powered by FlexAI © 2026",
                 style: const TextStyle(
                   color: Colors.grey,
                   fontSize: 14,

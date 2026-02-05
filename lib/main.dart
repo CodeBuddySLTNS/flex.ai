@@ -1,9 +1,12 @@
 import 'package:flexai/components/header.dart';
 import 'package:flexai/components/sidebar_drawer.dart';
 import 'package:flexai/providers/chat_provider.dart';
+import 'package:flexai/screens/activation_screen.dart';
 import 'package:flexai/screens/flexai_chat.dart';
 import 'package:flexai/screens/loading_screen.dart';
 import 'package:flexai/screens/settings.dart';
+import 'package:flexai/screens/share_screen.dart';
+import 'package:flexai/services/supabase_services.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -24,6 +27,11 @@ Future main() async {
   prefs = await SharedPreferencesWithCache.create(
     cacheOptions: SharedPreferencesWithCacheOptions(),
   );
+
+  // prefs.clear();
+
+  prefs.setBool('is_activated', false);
+  prefs.setBool('is_owner', false);
 
   runApp(const ProviderScope(child: FlexAI()));
 }
@@ -90,10 +98,19 @@ final routerProvider = Provider<GoRouter>((ref) {
           );
         },
         routes: [
-          GoRoute(path: "/", builder: (context, state) => const FlexAIChat()),
+          GoRoute(
+            path: "/",
+            builder: (context, state) => prefs.getBool('is_activated') ?? false
+                ? const FlexAIChat()
+                : const ActivationScreen(),
+          ),
           GoRoute(
             path: "/settings",
             builder: (context, state) => const Settings(),
+          ),
+          GoRoute(
+            path: "/share",
+            builder: (context, state) => const ShareScreen(),
           ),
         ],
       ),
@@ -109,10 +126,34 @@ class FlexAI extends ConsumerStatefulWidget {
 }
 
 class _FlexAIState extends ConsumerState<FlexAI> {
+  final SupabaseService _supabaseService = SupabaseService();
+  RealtimeChannel? _channel;
+
   @override
   void initState() {
     super.initState();
     ref.read(appStateProvider).initApp();
+    _subscribeToInstructionsChanges();
+  }
+
+  void _subscribeToInstructionsChanges() {
+    final instructionId = prefs.getString('instructionId');
+    if (instructionId == null) return;
+
+    _channel = _supabaseService.subscribeToInstructions(
+      instructionId: instructionId,
+      onUpdate: (ownerText) {
+        if (ownerText != null) {
+          prefs.setString('owner_text', ownerText);
+        }
+      },
+    );
+  }
+
+  @override
+  void dispose() {
+    _channel?.unsubscribe();
+    super.dispose();
   }
 
   @override
