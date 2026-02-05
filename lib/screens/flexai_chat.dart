@@ -272,7 +272,9 @@ class _FlexAIChatState extends ConsumerState<FlexAIChat> {
                                   ),
                                 ),
                                 SvgPicture.asset(
-                                  getAiModelAsset(model),
+                                  getAiModelAsset(
+                                    model.isNotEmpty ? model : 'flex_ai',
+                                  ),
                                   width:
                                       MediaQuery.of(context).size.width * 0.2 -
                                       20,
