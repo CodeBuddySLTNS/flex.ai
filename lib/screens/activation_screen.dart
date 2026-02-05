@@ -1,15 +1,23 @@
+import 'package:flexai/main.dart';
+import 'package:flexai/providers/chat_provider.dart';
+import 'package:flexai/services/supabase_services.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
-class ActivationScreen extends StatefulWidget {
+class ActivationScreen extends ConsumerStatefulWidget {
   const ActivationScreen({super.key});
 
   @override
-  State<ActivationScreen> createState() => _ActivationScreenState();
+  ConsumerState<ConsumerStatefulWidget> createState() =>
+      _ActivationScreenState();
 }
 
-class _ActivationScreenState extends State<ActivationScreen> {
+class _ActivationScreenState extends ConsumerState<ActivationScreen> {
   final TextEditingController _codeController = TextEditingController();
+  final SupabaseService _supabaseService = SupabaseService();
   bool _isActivating = false;
+  String? _errorMessage;
 
   @override
   void dispose() {
@@ -21,28 +29,50 @@ class _ActivationScreenState extends State<ActivationScreen> {
     final code = _codeController.text.trim();
 
     if (code.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please enter an activation code'),
-          backgroundColor: Colors.red,
-        ),
-      );
+      setState(() => _errorMessage = 'Please enter an activation code');
       return;
     }
 
-    setState(() => _isActivating = true);
+    setState(() {
+      _isActivating = true;
+      _errorMessage = null;
+    });
 
-    await Future.delayed(const Duration(seconds: 2));
+    try {
+      final model = await _supabaseService.getModel(code);
 
-    if (mounted) {
-      setState(() => _isActivating = false);
+      // save activation data to prefs
+      await prefs.setString('instructionId', model.id);
+      await prefs.setBool('is_activated', true);
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Activation successful!'),
-          backgroundColor: Colors.green,
-        ),
-      );
+      if (model.ownerText != null) {
+        await prefs.setString('owner_text', model.ownerText!);
+      }
+
+      if (mounted) {
+        setState(() => _isActivating = false);
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Activation successful!'),
+            backgroundColor: Colors.green,
+          ),
+        );
+
+        // navigate to home
+        context.go('/');
+        ref.invalidate(aiModelsProvider);
+        ref.read(selectedModelProvider.notifier).state = model.id;
+        ref.read(statusProvider.notifier).state = true;
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _isActivating = false;
+          _errorMessage =
+              'Invalid activation code. Please check and try again.';
+        });
+      }
     }
   }
 
@@ -159,6 +189,39 @@ class _ActivationScreenState extends State<ActivationScreen> {
                         letterSpacing: 1,
                       ),
                     ),
+
+                    // error message
+                    if (_errorMessage != null) ...[
+                      const SizedBox(height: 12),
+                      Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: Colors.red.shade50,
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(color: Colors.red.shade200),
+                        ),
+                        child: Row(
+                          children: [
+                            Icon(
+                              Icons.error_outline,
+                              color: Colors.red.shade700,
+                              size: 20,
+                            ),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                _errorMessage!,
+                                style: TextStyle(
+                                  fontFamily: 'Poppins',
+                                  fontSize: 12,
+                                  color: Colors.red.shade700,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
                     const SizedBox(height: 20),
 
                     // activate button
