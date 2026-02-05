@@ -33,28 +33,14 @@ class SidebarDrawer extends ConsumerWidget {
             ListTile(
               title: Row(
                 children: [
-                  Icon(Icons.settings),
-                  SizedBox(width: 5),
-                  Text("Settings", style: TextStyle(fontFamily: "Poppins")),
-                ],
-              ),
-              onTap: () {
-                ref.read(conversationIdProvider.notifier).state = 'settings';
-                context.pop();
-                context.go("/settings");
-              },
-            ),
-
-            ListTile(
-              title: Row(
-                children: [
                   Icon(Icons.add_rounded),
                   SizedBox(width: 5),
                   Text("New chat", style: TextStyle(fontFamily: "Poppins")),
                 ],
               ),
               onTap: () {
-                if (ref.read(conversationIdProvider) == 'settings') {
+                if (ref.read(conversationIdProvider) == 'settings' ||
+                    ref.read(conversationIdProvider) == 'share') {
                   context.go("/");
                 }
                 context.pop();
@@ -65,6 +51,41 @@ class SidebarDrawer extends ConsumerWidget {
                     'bbfb75e2-2a4e-4843-be60-0751440026db';
               },
             ),
+
+            if (prefs.getBool('is_owner') == true)
+              ListTile(
+                title: Row(
+                  children: [
+                    Icon(Icons.settings),
+                    SizedBox(width: 5),
+                    Text("Settings", style: TextStyle(fontFamily: "Poppins")),
+                  ],
+                ),
+                onTap: () {
+                  ref.read(conversationIdProvider.notifier).state = 'settings';
+                  context.pop();
+                  context.go("/settings");
+                },
+              ),
+
+            if (prefs.getBool('is_owner') == true)
+              ListTile(
+                title: Row(
+                  children: [
+                    Icon(Icons.share, size: 20),
+                    SizedBox(width: 8),
+                    Text(
+                      "Share with friends",
+                      style: TextStyle(fontFamily: "Poppins"),
+                    ),
+                  ],
+                ),
+                onTap: () {
+                  ref.read(conversationIdProvider.notifier).state = 'share';
+                  context.pop();
+                  context.go("/share");
+                },
+              ),
 
             Expanded(
               child: historyAsync.when(
