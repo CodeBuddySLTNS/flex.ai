@@ -29,9 +29,8 @@ Future main() async {
   );
 
   // prefs.clear();
-
-  prefs.setBool('is_activated', true);
-  prefs.setBool('is_owner', true);
+  // prefs.setBool('is_activated', true);
+  // prefs.setBool('is_owner', true);
 
   runApp(const ProviderScope(child: FlexAI()));
 }
