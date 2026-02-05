@@ -1,3 +1,4 @@
+import 'package:flexai/main.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -9,8 +10,7 @@ class ShareScreen extends StatefulWidget {
 }
 
 class _ShareScreenState extends State<ShareScreen> {
-  final String _appDownloadLink = "https://flexai.app/download";
-  final String _activationCode = "8607f5ff-e9c6-494f-a711-a165108b64e5";
+  final String _appDownloadLink = "https://renzcole.is-a.dev/FlexAI.apk";
   bool _linkCopied = false;
   bool _codeCopied = false;
 
@@ -181,17 +181,21 @@ class _ShareScreenState extends State<ShareScreen> {
                       ),
                       decoration: BoxDecoration(
                         gradient: LinearGradient(
-                          colors: [
-                            Colors.orange.shade400,
-                            Colors.deepOrange.shade400,
-                          ],
+                          colors:
+                              prefs.getString('default_model') != null &&
+                                  prefs.getString('default_model')!.isNotEmpty
+                              ? [
+                                  Colors.orange.shade400,
+                                  Colors.deepOrange.shade400,
+                                ]
+                              : [Colors.red.shade400, Colors.red.shade400],
                           begin: Alignment.topLeft,
                           end: Alignment.bottomRight,
                         ),
                         borderRadius: BorderRadius.circular(12),
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.orange.withValues(alpha: 0.3),
+                            color: Colors.red.withValues(alpha: 0.3),
                             blurRadius: 8,
                             offset: const Offset(0, 4),
                           ),
@@ -202,7 +206,8 @@ class _ShareScreenState extends State<ShareScreen> {
                         children: [
                           Expanded(
                             child: Text(
-                              _activationCode,
+                              prefs.getString('default_model') ??
+                                  "Oops! Please create an AI Persona first in settings so that activation code can be generated.",
                               style: const TextStyle(
                                 fontFamily: 'Poppins',
                                 fontSize: 20,
@@ -221,8 +226,10 @@ class _ShareScreenState extends State<ShareScreen> {
                     SizedBox(
                       width: double.infinity,
                       child: OutlinedButton.icon(
-                        onPressed: () =>
-                            _copyToClipboard(_activationCode, isCode: true),
+                        onPressed: () => _copyToClipboard(
+                          prefs.getString('default_model') ?? "",
+                          isCode: true,
+                        ),
                         icon: Icon(
                           _codeCopied
                               ? Icons.check_rounded
