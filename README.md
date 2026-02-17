@@ -1,16 +1,36 @@
-# flexai
+# 🤖 Flex AI
 
-A new Flutter project.
+A dynamic Flutter mobile application that enables seamless conversations with multiple AI personalities. Flex AI provides users with unique, customizable AI companions with different personas and communication styles.
 
-## Getting Started
+## ✨ Features
 
-This project is a starting point for a Flutter application.
+- **Multiple AI Personalities**: Interact with diverse AI characters including:
+  - **Flex AI** - Your main AI assistant
+  - **Bardagul AI** - A playful, witty character who loves roasting
+  - **Bisaya AI** - An AI that communicates in Bisaya language
+  - **Tita AI** - A warm, caring aunt-like personality
+  - **Harot AI** - A charming and flirty companion
+  - **Custom AI Models** - Create or integrate your own AI personalities
 
-A few resources to get you started if this is your first Flutter project:
+- **Real-time Chat Interface**: Send and receive messages with instant feedback
+- **Conversation History**: Save and access previous conversations
+- **User Activation System**: Activation codes allow controlled access to AI models
+- **Settings & Customization**: Personalize your experience with app settings
+- **Share Feature**: Easily share Flex AI with friends through activation codes and download links
+- **Offline Support**: Uses local storage with `shared_preferences`
+- **Responsive UI**: Beautiful Material Design interface with custom Poppins font
 
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
+## 🚀 Getting Started
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+### Prerequisites
+
+- Flutter SDK: ^3.10.4
+- Dart SDK (comes with Flutter)
+- A Supabase account (for backend services)
+
+### Installation
+
+1. **Clone the repository**
+   ```bash
+   git clone https://github.com/CodeBuddySLTNS/flex.ai.git
+   cd flex.ai
