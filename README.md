@@ -17,7 +17,6 @@ A dynamic Flutter mobile application that enables seamless conversations with mu
 - **User Activation System**: Activation codes allow controlled access to AI models
 - **Settings & Customization**: Personalize your experience with app settings
 - **Share Feature**: Easily share Flex AI with friends through activation codes and download links
-- **Offline Support**: Uses local storage with `shared_preferences`
 - **Responsive UI**: Beautiful Material Design interface with custom Poppins font
 
 ## 🚀 Getting Started
